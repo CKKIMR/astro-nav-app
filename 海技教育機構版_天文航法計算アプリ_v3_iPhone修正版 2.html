@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>海技士用 天文航法自動計算</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f7fa;margin:20px;color:#222;}
+h1{text-align:center;}
+.section{background:white;padding:15px;margin-bottom:15px;border-radius:10px;box-shadow:0 0 5px rgba(0,0,0,0.15);max-width:none;}
+table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+th,td{border:1px solid #ccc;padding:5px;text-align:center;}
+th{background:white;}
+input{padding:4px;text-align:center;}
+select{padding:4px;text-align:center;}
+.deg{width:70px;}.min{width:60px;}.time{width:60px;}.corr{width:90px;}
+button{padding:8px 15px;cursor:pointer;}
+.result{background:#eef;padding:10px;margin-top:10px;border-radius:5px;line-height:1.65;}
+.readonly{background:#ffffcc;font-weight:normal;width:160px;}
+.body-title{background:white;color:#222;padding:0;margin-top:18px;border-radius:0;}
+.sign-plus,.sign-minus{color:inherit;}
+.note{font-size:.92rem;color:#555;}
+@media(max-width:650px){body{margin:8px}.section{padding:10px}th,td{padding:5px;font-size:14px}.deg,.min{width:62px}.readonly{width:130px}}
+</style>
+</head>
+<style>.hidden{display:none!important}.menu-screen{min-height:80vh;display:flex;align-items:center;justify-content:center}.menu-card{background:#fff;padding:35px;max-width:650px;width:100%;text-align:center;border-radius:10px;box-shadow:0 0 5px rgba(0,0,0,.15)}.menu-buttons{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:30px}.menu-buttons button{font-size:18px;padding:18px 30px;min-width:220px}.back{margin-bottom:10px}.dec{width:40px}.reset-btn{margin-left:8px;background:#fff;border:1px solid #999;color:#222}.reset-btn:hover{background:#f2f2f2}</style><body><div id="menuScreen" class="menu-screen"><div class="menu-card"><h1>天文航法計算支援システム</h1><p>使用する計算を選択してください</p><div class="menu-buttons"><button onclick="showMode('kaigishiMode')">海技士用計算</button><button onclick="showMode('trainingMode')">海技教育機構用計算</button></div></div></div><div id="kaigishiMode" class="mode-screen hidden"><button class="back" onclick="showMenu()">← 計算選択へ戻る</button>
+<h1>海技士用計算</h1>
+
+<div class="section">
+<h2>推測地点</h2>
+<table>
+<tr><th>項目</th><th>入力</th></tr>
+<tr><td>緯度 l</td><td><select id="apLatNS"><option>N</option><option>S</option></select> <input type="text" id="apLatDeg" class="deg" min="0" max="90">° <input type="text" id="apLatMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+<tr><td>経度 L</td><td><select id="apLonEW"><option>E</option><option>W</option></select> <input type="text" id="apLonDeg" class="deg" min="0" max="180">° <input type="text" id="apLonMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+</table>
+<p class="note">地方時角はプリントの規則に合わせて h = hG ± L（東経 +、西経 -）で計算します。</p>
+</div>
+
+<div class="section">
+<h2>天体観測</h2>
+<div id="bodies"></div>
+<button type="button" onclick="calcAll()">A・Bを計算</button> <button type="button" class="reset-btn" onclick="resetKaigishi()">リセット</button>
+<div id="result" class="result">数値を入力してください。</div>
+</div>
+
+</div>
+<div id="trainingMode" class="mode-screen hidden">
+<button class="back" onclick="showMenu()">← 計算選択へ戻る</button><h1>海技教育機構用 天文航法計算支援システム</h1>
+<div class="section"><h2>出発船位</h2><table>
+<tr><td>緯度</td><td><select id="latNS"><option>N</option><option>S</option></select> <input type="text" id="latDeg" class="deg">° - <input type="text" id="latMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+<tr><td>経度</td><td><select id="lonEW"><option>E</option><option>W</option></select> <input type="text" id="lonDeg" class="deg">° - <input type="text" id="lonMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+</table></div>
+<div class="section"><h2>Dist. / Co.</h2><table id="drTable"><tr><th>Leg</th><th>Dist.</th><th>Co.</th></tr>
+<tr><td>1</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>2</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>3</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>4</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>5</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>6</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>7</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>8</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr></table><br><button onclick="calcDR()">DR計算</button> <button type="button" class="reset-btn" onclick="resetTraining()">全リセット</button><div id="drResult" class="result"></div></div>
+<div class="section"><h2>天測計算</h2><table>
+<tr><td>日本時</td><td><input id="jstHour" type="text" min="0" max="23" style="width:60px">時 <input id="jstMinute" type="text" min="0" max="59" style="width:60px">分 <input id="jstSecond" type="text" min="0" max="59.9" step="0.1" style="width:60px">秒</td></tr>
+
+<tr><td>d</td><td><select id="decNS"><option>N</option><option>S</option></select> <input type="text" id="decDeg" class="deg">° - <input type="text" id="decMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+<tr><td>GHA</td><td><input type="text" id="ghaDeg" class="deg">° - <input type="text" id="ghaMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+<tr><td>h</td><td><input id="hValue" readonly class="readonly"></td></tr><tr><td>Corr(')</td><td><input type="text" id="corr" value="0"></td></tr>
+<tr><td>①Ao</td><td><input type="text" id="ao1Deg" class="deg">° - <input type="text" id="ao1Min" class="min" min="0" max="59.9" step="0.1">'</td></tr><tr><td>②Ao</td><td><input type="text" id="ao2Deg" class="deg">° - <input type="text" id="ao2Min" class="min" min="0" max="59.9" step="0.1">'</td></tr><tr><td>③Ao</td><td><input type="text" id="ao3Deg" class="deg">° - <input type="text" id="ao3Min" class="min" min="0" max="59.9" step="0.1">'</td></tr>
+<tr><td>①Δh</td><td><input id="deltaHObs1" type="text" step="0.1"></td></tr><tr><td>②Δh</td><td><input id="deltaHObs2" type="text" step="0.1"></td></tr>
+<tr><td>①Δa</td><td><input id="deltaA1" readonly class="readonly"></td></tr><tr><td>②Δa</td><td><input id="deltaA2" readonly class="readonly"></td></tr>
+<tr><td>①I</td><td><input id="i1" readonly class="readonly"></td></tr><tr><td>②I</td><td><input id="i2" readonly class="readonly"></td></tr><tr><td>③I</td><td><input id="i3" readonly class="readonly"></td></tr><tr><td>平均I</td><td><input id="averageI" readonly class="readonly"></td></tr>
+</table><br><button onclick="calcAstro()">Ac / Az / I 計算</button><div id="astroResult" class="result"></div></div></div>
+<script>function degToRad(d){return d*Math.PI/180} function radToDeg(r){return r*180/Math.PI}</script><script>
+const bodyDefs=[['a','天体 A'],['b','天体 B']];
+function bodyHTML(p,name){return `
+<h3 class="body-title">${name}</h3>
+<table>
+<tr><th>入力項目</th><th>値</th></tr>
+<tr><td>観測時刻</td><td><input id="${p}Hour" type="text" class="time" min="0" max="23">時 <input id="${p}Minute" type="text" class="time" min="0" max="59">分 <input id="${p}Second" type="text" class="time" min="0" max="59.9" step="0.1">秒</td></tr>
+<tr><td>測高度</td><td><input id="${p}HsDeg" type="text" class="deg">° <input id="${p}HsMin" type="text" class="min" step="0.1">'</td></tr>
+<tr><td>hG</td><td><input id="${p}HgDeg" type="text" class="deg">° <input id="${p}HgMin" type="text" class="min" step="0.1">'</td></tr>
+<tr><td>d</td><td><select id="${p}DecNS"><option>N</option><option>S</option></select> <input id="${p}DecDeg" type="text" class="deg">° <input id="${p}DecMin" type="text" class="min" step="0.1">'</td></tr>
+<tr><td>高度改正値</td><td><input id="${p}Correction" type="text" class="corr" value="0" step="0.1">'</td></tr>
+<tr><td>地方時角 h</td><td><input id="${p}H" readonly class="readonly"></td></tr>
+<tr><td>計算高度 Ac</td><td><input id="${p}Ac" readonly class="readonly"></td></tr>
+<tr><td>方位角 Az</td><td><input id="${p}Az" readonly class="readonly"></td></tr>
+<tr><td>高度改正後</td><td><input id="${p}Ho" readonly class="readonly"></td></tr>
+<tr><td>インターセプト I</td><td><input id="${p}I" readonly class="readonly"></td></tr>
+</table>`}
+document.getElementById('bodies').innerHTML=bodyDefs.map(x=>bodyHTML(...x)).join('');
+
+const rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const clamp=x=>Math.max(-1,Math.min(1,x));
+const norm=x=>((x%360)+360)%360;
+function val(id){return Number(document.getElementById(id).value||0)}
+function has(id){return document.getElementById(id).value!==''}
+function signedDM(dir,d,m,positive){let x=Number(d||0)+Number(m||0)/60; return dir===positive?x:-x}
+function fmtDM(x,showSign=false){let s=x<0?'-':(showSign?'+':'');x=Math.abs(x);let d=Math.floor(x),m=Math.round((x-d)*600)/10;if(m>=60){d++;m=0}return `${s}${d}°-${m.toFixed(1)}'`}
+function fmtI(x){return `${x>=0?'+':''}${x.toFixed(1)}'`}
+function fmtSignedDM(x){return (x<0?'-':'')+fmtDM(Math.abs(x));}
+
+function calculateBody(p,lat,lon){
+ if(!has(p+'HgDeg')&&!has(p+'HgMin')&&!has(p+'HsDeg')&&!has(p+'HsMin')&&!has(p+'DecDeg')&&!has(p+'DecMin')) return null;
+ const hG=val(p+'HgDeg')+val(p+'HgMin')/60;
+ const dec=signedDM(document.getElementById(p+'DecNS').value,val(p+'DecDeg'),val(p+'DecMin'),'N');
+ const h=norm(hG+lon);
+ const sinAc=clamp(Math.sin(rad(lat))*Math.sin(rad(dec))+Math.cos(rad(lat))*Math.cos(rad(dec))*Math.cos(rad(h)));
+ const Ac=deg(Math.asin(sinAc));
+ let cosZ=(Math.sin(rad(dec))-Math.sin(rad(lat))*Math.sin(rad(Ac)))/(Math.cos(rad(lat))*Math.cos(rad(Ac)));
+ const Z=deg(Math.acos(clamp(cosZ)));
+ const ew=h<180?'W':'E';
+ // N/S はユーザー指定どおり d の符号をそのまま使用
+ const ns=dec>=0?'N':'S';
+ const quadrant=ns+ew;
+ let Az;
+ if(quadrant==='NE') Az=Z;
+ else if(quadrant==='SE') Az=180-Z;
+ else if(quadrant==='SW') Az=180+Z;
+ else Az=360-Z; // NW
+ Az=norm(Az);
+ const azText=`${ns}${Z.toFixed(1)}°${ew}（${Az.toFixed(1)}°）`; 
+ const Hs=val(p+'HsDeg')+val(p+'HsMin')/60;
+ const correction=val(p+'Correction');
+ const Ho=Hs+correction/60;
+ const I=(Ho-Ac)*60;
+ document.getElementById(p+'H').value=fmtDM(h);
+ document.getElementById(p+'Ac').value=fmtDM(Ac);
+ document.getElementById(p+'Az').value=azText;
+ document.getElementById(p+'Ho').value=fmtDM(Ho);
+ document.getElementById(p+'I').value=fmtI(I);
+ return {hG,dec,h,Ac,Z,Az,quadrant,ew,ns,azText,Hs,correction,Ho,I,sinAc,cosZ};
+}
+
+function hourAngleAdjustmentText(raw){
+ if(raw>=360){return "= "+fmtSignedDM(raw)+"<br>360°を超えたので -360°<br>= "+fmtDM(raw-360)+"<br>";}
+ if(raw<0){return "= "+fmtSignedDM(raw)+"<br>マイナスになったので +360°<br>= "+fmtDM(raw+360)+"<br>";}
+ return "= "+fmtDM(raw)+"<br>0°〜360°の範囲なので補正なし<br>";
+}
+function calcAll(){
+ const lat=signedDM(document.getElementById('apLatNS').value,val('apLatDeg'),val('apLatMin'),'N');
+ const lon=signedDM(document.getElementById('apLonEW').value,val('apLonDeg'),val('apLonMin'),'E');
+ const A=calculateBody('a',lat,lon), B=calculateBody('b',lat,lon);
+ let html=`<b>推測地点</b><br>l = ${document.getElementById('apLatNS').value} ${fmtDM(Math.abs(lat))}<br>L = ${document.getElementById('apLonEW').value} ${fmtDM(Math.abs(lon))}<br><br>`;
+ for(const [name,o] of [['天体 A',A],['天体 B',B]]){
+  if(!o){html+=`<b>${name}</b>: 未入力<br><br>`;continue}
+  const sign=o.I>=0?'sign-plus':'sign-minus';
+  const azRule=o.quadrant==='NE'?`Az = Z = ${fmtDM(o.Z)} = ${o.Az.toFixed(1)}°`:o.quadrant==='SE'?`Az = 180°-00.0' − Z = 180°-00.0' − ${fmtDM(o.Z)} = ${o.Az.toFixed(1)}°`:o.quadrant==='SW'?`Az = 180°-00.0' + Z = 180°-00.0' + ${fmtDM(o.Z)} = ${o.Az.toFixed(1)}°`:`Az = 360°-00.0' − Z = 360°-00.0' − ${fmtDM(o.Z)} = ${o.Az.toFixed(1)}°`;
+  html+=`<b>${name}</b><br><br>`+
+  `<b>① 地方時角 h</b><br>h = hG ± L<br>${lon>=0?'経度がEなのでプラス（+）':'経度がWなのでマイナス（-）'}<br>= ${fmtDM(o.hG)} ${lon>=0?'+':'-'} ${fmtDM(Math.abs(lon))}<br>${hourAngleAdjustmentText(o.hG+lon)}<b>h = ${fmtDM(o.h)}</b><br><br>`+
+  `<b>② 計算高度 Ac</b><br>sin Ac = sin(l) × sin(d) + cos(l) × cos(d) × cos(h)<br>`+
+  `= sin(${fmtSignedDM(lat)}) × sin(${fmtSignedDM(o.dec)}) + cos(${fmtSignedDM(lat)}) × cos(${fmtSignedDM(o.dec)}) × cos(${fmtDM(o.h)})<br>`+
+  `= ${o.sinAc.toFixed(8)}<br>Ac = sin⁻¹(${o.sinAc.toFixed(8)}) = <b>${fmtDM(o.Ac)}</b><br><br>`+
+  `<b>③ 方位角 Az</b><br>cos Z = {sin(d) − sin(l) × sin(Ac)} ÷ {cos(l) × cos(Ac)}<br>`+
+  `= {sin(${fmtSignedDM(o.dec)}) − sin(${fmtSignedDM(lat)}) × sin(${fmtSignedDM(o.Ac)})} ÷ {cos(${fmtSignedDM(lat)}) × cos(${fmtSignedDM(o.Ac)})}<br>`+
+  `= ${o.cosZ.toFixed(8)}<br>Z = cos⁻¹(${o.cosZ.toFixed(8)}) = ${fmtDM(o.Z)}<br>`+
+  `h = ${fmtDM(o.h)} → ${o.ew}、d = ${o.dec>=0?'N':'S'} ${fmtDM(Math.abs(o.dec))} → ${o.ns}<br>`+
+  `符号 = <b>${o.quadrant}</b><br>${azRule}<br>Az = <b>${o.azText}</b><br><br>`+
+  `<b>④ 高度改正</b><br>Ho = 測高度 + 高度改正値<br>= ${fmtDM(o.Hs)} ${o.correction>=0?'+':'−'} ${Math.abs(o.correction).toFixed(1)}'<br>= <b>${fmtDM(o.Ho)}</b><br><br>`+
+  `<b>⑤ インターセプト I</b><br>I = Ho − Ac<br>= ${fmtDM(o.Ho)} − ${fmtDM(o.Ac)}<br>= <b class="${sign}">${fmtI(o.I)}</b><br><br>`;
+ }
+ document.getElementById('result').innerHTML=html;
+}
+
+document.addEventListener('input',e=>{if(e.target.matches('input,select'))calcAll()});
+document.addEventListener('change',e=>{if(e.target.matches('input,select'))calcAll()});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();const items=[...document.querySelectorAll('input:not([readonly]),select,button')].filter(x=>!x.disabled);const i=items.indexOf(document.activeElement);if(i>=0&&i<items.length-1)items[i+1].focus()});
+window.addEventListener('load',()=>document.getElementById('apLatDeg').focus());
+</script>
+
+<script>
+function showMode(id){document.getElementById('menuScreen').classList.add('hidden');document.getElementById('kaigishiMode').classList.add('hidden');document.getElementById('trainingMode').classList.add('hidden');document.getElementById(id).classList.remove('hidden');window.scrollTo(0,0)}
+function showMenu(){document.getElementById('kaigishiMode').classList.add('hidden');document.getElementById('trainingMode').classList.add('hidden');document.getElementById('menuScreen').classList.remove('hidden');window.scrollTo(0,0)}
+let drLat=0,drLon=0;
+function dmToDecimal2(dir,d,m){let v=Number(d)+Number(m)/60;if(dir==='S'||dir==='W')v=-v;return v}
+function decimalToDM2(v,isLat){let dir=isLat?(v>=0?'N':'S'):(v>=0?'E':'W');v=Math.abs(v);let d=Math.floor(v),m=(v-d)*60;return dir+' '+d+'°-'+m.toFixed(1)+"'"}
+function calcDeltaH(){}
+function calcDR(){let lm=Number(latMin.value||0),om=Number(lonMin.value||0);let lat=dmToDecimal2(latNS.value,latDeg.value,lm),lon=dmToDecimal2(lonEW.value,lonDeg.value,om);let sd=0,sp=0,detail='';let ds=document.querySelectorAll('#trainingMode .dist'),cs=document.querySelectorAll('#trainingMode .co');for(let i=0;i<ds.length;i++){let dist=Number(ds[i].value||0),co=Number(cs[i].value||0),dl=dist*Math.cos(degToRad(co)),dep=dist*Math.sin(degToRad(co));sd+=dl;sp+=dep;if(dist!==0||co!==0)detail+=`<b>${i+1}航程</b><br>D.lat = Dist × Cos(Co.) = ${dist.toFixed(2)} × Cos(${co.toFixed(2)}°) = ${dl.toFixed(2)}'<br>Dep. = Dist × Sin(Co.) = ${dist.toFixed(2)} × Sin(${co.toFixed(2)}°) = ${dep.toFixed(2)}'<br><br>`}drLat=lat+sd/60;let mid=(lat+drLat)/2,dlon=sp/Math.cos(degToRad(mid));drLon=lon+dlon/60;window.currentDRLon=drLon;drResult.innerHTML=`<b>推測船位計算結果</b><br><br>D.lat = ${sd.toFixed(2)}'<br>Dep. = ${sp.toFixed(2)}'<br>Mid.lat = ${decimalToDM2(mid,true)}<br>D.Long = ${dlon.toFixed(2)}'<br>DR緯度 = ${decimalToDM2(drLat,true)}<br>DR経度 = ${decimalToDM2(drLon,false)}<br><br><b>計算過程</b><br><br>${detail}<b>Mid.lat の計算</b><br>Mid.lat = (l₁ + l₂) ÷ 2<br>= (${lat.toFixed(4)}° + ${drLat.toFixed(4)}°) ÷ 2<br>= ${decimalToDM2(mid,true)}<br><br><b>D.Long の計算</b><br>D.Long = Dep. ÷ Cos(Mid.lat)<br>= ${sp.toFixed(2)}' ÷ Cos(${mid.toFixed(4)}°)<br>= ${dlon.toFixed(2)}'<br><br><b>DR経度の計算</b><br>L₂ = L₁ ± D.Long<br>= ${lon.toFixed(4)}° ${dlon>=0?'+':'-'} ${Math.abs(dlon/60).toFixed(4)}°<br>= ${decimalToDM2(drLon,false)}`;calcH()}
+function calcH(){let gm=Number(ghaMin.value||0),gha=Number(ghaDeg.value||0)+gm/60,h=gha+(window.currentDRLon||0);while(h>=360)h-=360;while(h<0)h+=360;hValue.value=h.toFixed(4);return h}
+function formatDegreeMinute2(v){let d=Math.floor(Math.abs(v)),m=(Math.abs(v)-d)*60;return d+'°-'+m.toFixed(1)+"'"}
+function aoVal(i){let d=Number(document.getElementById('ao'+i+'Deg').value||0),m=Number(document.getElementById('ao'+i+'Min').value||0);return d+m/60}
+function calcAstro(){let dm=Number(decMin.value||0),dc=dmToDecimal2(decNS.value,decDeg.value,dm),h=calcH(),c=Number(corr.value||0),l=drLat;let s=Math.sin(degToRad(l))*Math.sin(degToRad(dc))+Math.cos(degToRad(l))*Math.cos(degToRad(dc))*Math.cos(degToRad(h));s=Math.max(-1,Math.min(1,s));let Ac=radToDeg(Math.asin(s)),AcP=Ac-c/60,ca=(Math.sin(degToRad(dc))-Math.sin(degToRad(l))*Math.sin(degToRad(AcP)))/(Math.cos(degToRad(l))*Math.cos(degToRad(AcP)));ca=Math.max(-1,Math.min(1,ca));let Az=radToDeg(Math.acos(ca)),dh1=Number(deltaHObs1.value||0),dh2=Number(deltaHObs2.value||0),da1=Math.sin(degToRad(Az))+Math.cos(degToRad(l))*dh1/4,da2=Math.sin(degToRad(Az))+Math.cos(degToRad(l))*dh2/4;deltaA1.value=da1.toFixed(1);deltaA2.value=da2.toFixed(1);let ac1=AcP,ac2=ac1+da1/60,ac3=ac1+da2/60,i_1=(aoVal(1)-ac1)*60,i_2=(aoVal(2)-ac2)*60,i_3=(aoVal(3)-ac3)*60,av=(i_1+i_2+i_3)/3;i1.value=i_1.toFixed(1);i2.value=i_2.toFixed(1);i3.value=i_3.toFixed(1);averageI.value=av.toFixed(1);hValue.value=formatDegreeMinute2(h);astroResult.innerHTML=`<b>天測計算結果</b><br><br>Ac = ${formatDegreeMinute2(Ac)}<br>①Ac' = ${formatDegreeMinute2(ac1)}<br>②Ac' = ${formatDegreeMinute2(ac2)}<br>③Ac' = ${formatDegreeMinute2(ac3)}<br><br>Az = ${Az.toFixed(1)}°<br><br>①Δa = ${da1.toFixed(4)}<br>②Δa = ${da2.toFixed(4)}<br><br>①I = ${i_1.toFixed(1)}'<br>②I = ${i_2.toFixed(1)}'<br>③I = ${i_3.toFixed(1)}'<br>平均I = ${av.toFixed(1)}'<br><br><b>計算過程</b><br><br><b>①Acの計算</b><br>Sin(Ac) = Sin(l) × Sin(d) ＋ Cos(l) × Cos(d) × Cos(h)<br>= Sin(${l.toFixed(4)}°) × Sin(${dc.toFixed(4)}°) ＋ Cos(${l.toFixed(4)}°) × Cos(${dc.toFixed(4)}°) × Cos(${h.toFixed(4)}°)<br>= ${s.toFixed(8)}<br>Ac = Sin⁻¹(${s.toFixed(8)}) = ${formatDegreeMinute2(Ac)}<br><br><b>②Ac'の計算</b><br>Ac' = Ac − Corr. ÷ 60<br>= ${Ac.toFixed(6)}° − ${c.toFixed(4)}′ ÷ 60<br>= ${formatDegreeMinute2(AcP)}<br><br><b>③Azの計算</b><br>Cos(Az) = {Sin(d) − Sin(l) × Sin(Ac')} ÷ {Cos(l) × Cos(Ac')}<br>= ${ca.toFixed(8)}<br>Az = Cos⁻¹(${ca.toFixed(8)}) = ${Az.toFixed(1)}°<br><br><b>④Δaの計算</b><br>①Δa = Sin(Az) ＋ Cos(l) × Δh ÷ 4 = ${da1.toFixed(8)}<br>②Δa = Sin(Az) ＋ Cos(l) × Δh ÷ 4 = ${da2.toFixed(8)}<br><br><b>⑤Iの計算</b><br>①I = (①Ao − ①Ac') × 60 = ${i_1.toFixed(2)}'<br>②I = (②Ao − ②Ac') × 60 = ${i_2.toFixed(2)}'<br>③I = (③Ao − ③Ac') × 60 = ${i_3.toFixed(2)}'<br><br><b>⑥平均I</b><br>= (${i_1.toFixed(2)} ＋ ${i_2.toFixed(2)} ＋ ${i_3.toFixed(2)}) ÷ 3 = ${av.toFixed(2)}'`}
+document.addEventListener('input',function(e){if(e.target.closest('#trainingMode')){calcH()}});
+</script>
+<script>
+function resetPanel(panelId){
+  const panel=document.getElementById(panelId);
+  panel.querySelectorAll('input').forEach(el=>{
+    if(el.readOnly){el.value='';return;}
+    if(el.type==='number'||el.type==='text'||!el.type){el.value='';}
+  });
+  panel.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+  panel.querySelectorAll('.result').forEach(el=>el.innerHTML='');
+}
+function resetKaigishi(){
+  resetPanel('kaigishiMode');
+  ['aCorrection','bCorrection'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='0';});
+  const r=document.getElementById('result');if(r)r.innerHTML='数値を入力してください。';
+  const f=document.getElementById('apLatDeg');if(f)f.focus();
+}
+function resetTraining(){
+  resetPanel('trainingMode');
+  const c=document.getElementById('corr');if(c)c.value='0';
+  drLat=0;drLon=0;window.currentDRLon=0;
+  const f=document.getElementById('latDeg');if(f)f.focus();
+}
+</script><script>
+document.querySelectorAll('input:not([readonly])').forEach(el=>{
+  el.autocomplete='off';
+  el.autocorrect='off';
+  el.spellcheck=false;
+  el.addEventListener('input',function(){
+    let v=this.value.replace(/[^0-9.\-]/g,'');
+    const neg=v.startsWith('-');
+    v=(neg?'-':'')+v.replace(/-/g,'').replace(/(\..*)\./g,'$1');
+    this.value=v;
+  });
+});
+</script>
+
+<script>
+window.addEventListener('error',function(e){console.log('JS error',e.message);});
+document.addEventListener('DOMContentLoaded',function(){
+ try{
+  if(typeof showMenu==='function'){showMenu();}
+ }catch(e){}
+});
+</script>
+
+</body></html>
