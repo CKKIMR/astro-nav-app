@@ -22,8 +22,6 @@ button{padding:8px 15px;cursor:pointer;}
 .note{font-size:.92rem;color:#555;}
 @media(max-width:650px){body{margin:8px}.section{padding:10px}th,td{padding:5px;font-size:14px}.deg,.min{width:62px}.readonly{width:130px}}
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e88e5">
 </head>
 <style>.hidden{display:none!important}.menu-screen{min-height:80vh;display:flex;align-items:center;justify-content:center}.menu-card{background:#fff;padding:35px;max-width:650px;width:100%;text-align:center;border-radius:10px;box-shadow:0 0 5px rgba(0,0,0,.15)}.menu-buttons{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:30px}.menu-buttons button{font-size:18px;padding:18px 30px;min-width:220px}.back{margin-bottom:10px}.dec{width:40px}.reset-btn{margin-left:8px;background:#fff;border:1px solid #999;color:#222}.reset-btn:hover{background:#f2f2f2}</style><body><div id="menuScreen" class="menu-screen"><div class="menu-card"><h1>天文航法計算支援システム</h1><p>使用する計算を選択してください</p><div class="menu-buttons"><button onclick="showMode('kaigishiMode')">海技士用計算</button><button onclick="showMode('trainingMode')">海技教育機構用計算</button></div></div></div><div id="kaigishiMode" class="mode-screen hidden"><button class="back" onclick="showMenu()">← 計算選択へ戻る</button>
 <h1>海技士用計算</h1>
@@ -55,7 +53,9 @@ button{padding:8px 15px;cursor:pointer;}
 <div class="section"><h2>Dist. / Co.</h2><table id="drTable"><tr><th>Leg</th><th>Dist.</th><th>Co.</th></tr>
 <tr><td>1</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>2</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>3</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>4</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>5</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>6</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>7</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr><tr><td>8</td><td><input class="dist" type="text" step="0.1"></td><td><input class="co" type="text" step="0.1"></td></tr></table><br><button onclick="calcDR()">DR計算</button> <button type="button" class="reset-btn" onclick="resetTraining()">全リセット</button><div id="drResult" class="result"></div></div>
 <div class="section"><h2>天測計算</h2><table>
-<tr><td>日本時</td><td><input id="jstHour" type="text" min="0" max="23" style="width:60px">時 <input id="jstMinute" type="text" min="0" max="59" style="width:60px">分 <input id="jstSecond" type="text" min="0" max="59.9" step="0.1" style="width:60px">秒</td></tr>
+<tr><td>日本時</td><td><input id="jstHour" type="text" min="0" max="23" style="width:60px">時 <input id="jstMinute" type="text" min="0" max="59" style="width:60px">分 <input id="jstSecond" type="text" min="0" max="59.9" step="0.1" style="width:60px">秒</td></tr>  
+<tr><td>時刻改正</td><td><select id="timeCorrSign"><option value="+">＋</option><option value="-">－</option></select> <input id="timeCorrHour" type="text" style="width:60px">時 <input id="timeCorrMinute" type="text" style="width:60px">分</td></tr>
+<tr><td>世界時(UT)</td><td><input id="utTime" readonly class="readonly"></td></tr>
 
 <tr><td>d</td><td><select id="decNS"><option>N</option><option>S</option></select> <input type="text" id="decDeg" class="deg">° - <input type="text" id="decMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
 <tr><td>GHA</td><td><input type="text" id="ghaDeg" class="deg">° - <input type="text" id="ghaMin" class="min" min="0" max="59.9" step="0.1">'</td></tr>
@@ -170,11 +170,30 @@ function dmToDecimal2(dir,d,m){let v=Number(d)+Number(m)/60;if(dir==='S'||dir===
 function decimalToDM2(v,isLat){let dir=isLat?(v>=0?'N':'S'):(v>=0?'E':'W');v=Math.abs(v);let d=Math.floor(v),m=(v-d)*60;return dir+' '+d+'°-'+m.toFixed(1)+"'"}
 function calcDeltaH(){}
 function calcDR(){let lm=Number(latMin.value||0),om=Number(lonMin.value||0);let lat=dmToDecimal2(latNS.value,latDeg.value,lm),lon=dmToDecimal2(lonEW.value,lonDeg.value,om);let sd=0,sp=0,detail='';let ds=document.querySelectorAll('#trainingMode .dist'),cs=document.querySelectorAll('#trainingMode .co');for(let i=0;i<ds.length;i++){let dist=Number(ds[i].value||0),co=Number(cs[i].value||0),dl=dist*Math.cos(degToRad(co)),dep=dist*Math.sin(degToRad(co));sd+=dl;sp+=dep;if(dist!==0||co!==0)detail+=`<b>${i+1}航程</b><br>D.lat = Dist × Cos(Co.) = ${dist.toFixed(2)} × Cos(${co.toFixed(2)}°) = ${dl.toFixed(2)}'<br>Dep. = Dist × Sin(Co.) = ${dist.toFixed(2)} × Sin(${co.toFixed(2)}°) = ${dep.toFixed(2)}'<br><br>`}drLat=lat+sd/60;let mid=(lat+drLat)/2,dlon=sp/Math.cos(degToRad(mid));drLon=lon+dlon/60;window.currentDRLon=drLon;drResult.innerHTML=`<b>推測船位計算結果</b><br><br>D.lat = ${sd.toFixed(2)}'<br>Dep. = ${sp.toFixed(2)}'<br>Mid.lat = ${decimalToDM2(mid,true)}<br>D.Long = ${dlon.toFixed(2)}'<br>DR緯度 = ${decimalToDM2(drLat,true)}<br>DR経度 = ${decimalToDM2(drLon,false)}<br><br><b>計算過程</b><br><br>${detail}<b>Mid.lat の計算</b><br>Mid.lat = (l₁ + l₂) ÷ 2<br>= (${lat.toFixed(4)}° + ${drLat.toFixed(4)}°) ÷ 2<br>= ${decimalToDM2(mid,true)}<br><br><b>D.Long の計算</b><br>D.Long = Dep. ÷ Cos(Mid.lat)<br>= ${sp.toFixed(2)}' ÷ Cos(${mid.toFixed(4)}°)<br>= ${dlon.toFixed(2)}'<br><br><b>DR経度の計算</b><br>L₂ = L₁ ± D.Long<br>= ${lon.toFixed(4)}° ${dlon>=0?'+':'-'} ${Math.abs(dlon/60).toFixed(4)}°<br>= ${decimalToDM2(drLon,false)}`;calcH()}
+
+function calcUT(){
+ let h=Number(document.getElementById('jstHour')?.value||0);
+ let m=Number(document.getElementById('jstMinute')?.value||0);
+ let s=Number(document.getElementById('jstSecond')?.value||0);
+ let ch=Number(document.getElementById('timeCorrHour')?.value||0);
+ let cm=Number(document.getElementById('timeCorrMinute')?.value||0);
+ let total=h*60+m;
+ if((document.getElementById('timeCorrSign')?.value||'+')==='+') total+=ch*60+cm;
+ else total-=ch*60+cm;
+ total-=540;
+ while(total<0) total+=1440;
+ while(total>=1440) total-=1440;
+ let uh=Math.floor(total/60), um=total%60;
+ let out=`${String(uh).padStart(2,'0')}:${String(um).padStart(2,'0')}:${String(Math.floor(s)).padStart(2,'0')}`;
+ const el=document.getElementById('utTime'); if(el) el.value=out;
+ return out;
+}
+
 function calcH(){let gm=Number(ghaMin.value||0),gha=Number(ghaDeg.value||0)+gm/60,h=gha+(window.currentDRLon||0);while(h>=360)h-=360;while(h<0)h+=360;hValue.value=h.toFixed(4);return h}
 function formatDegreeMinute2(v){let d=Math.floor(Math.abs(v)),m=(Math.abs(v)-d)*60;return d+'°-'+m.toFixed(1)+"'"}
 function aoVal(i){let d=Number(document.getElementById('ao'+i+'Deg').value||0),m=Number(document.getElementById('ao'+i+'Min').value||0);return d+m/60}
 function calcAstro(){let dm=Number(decMin.value||0),dc=dmToDecimal2(decNS.value,decDeg.value,dm),h=calcH(),c=Number(corr.value||0),l=drLat;let s=Math.sin(degToRad(l))*Math.sin(degToRad(dc))+Math.cos(degToRad(l))*Math.cos(degToRad(dc))*Math.cos(degToRad(h));s=Math.max(-1,Math.min(1,s));let Ac=radToDeg(Math.asin(s)),AcP=Ac-c/60,ca=(Math.sin(degToRad(dc))-Math.sin(degToRad(l))*Math.sin(degToRad(AcP)))/(Math.cos(degToRad(l))*Math.cos(degToRad(AcP)));ca=Math.max(-1,Math.min(1,ca));let Az=radToDeg(Math.acos(ca)),dh1=Number(deltaHObs1.value||0),dh2=Number(deltaHObs2.value||0),da1=Math.sin(degToRad(Az))+Math.cos(degToRad(l))*dh1/4,da2=Math.sin(degToRad(Az))+Math.cos(degToRad(l))*dh2/4;deltaA1.value=da1.toFixed(1);deltaA2.value=da2.toFixed(1);let ac1=AcP,ac2=ac1+da1/60,ac3=ac1+da2/60,i_1=(aoVal(1)-ac1)*60,i_2=(aoVal(2)-ac2)*60,i_3=(aoVal(3)-ac3)*60,av=(i_1+i_2+i_3)/3;i1.value=i_1.toFixed(1);i2.value=i_2.toFixed(1);i3.value=i_3.toFixed(1);averageI.value=av.toFixed(1);hValue.value=formatDegreeMinute2(h);astroResult.innerHTML=`<b>天測計算結果</b><br><br>Ac = ${formatDegreeMinute2(Ac)}<br>①Ac' = ${formatDegreeMinute2(ac1)}<br>②Ac' = ${formatDegreeMinute2(ac2)}<br>③Ac' = ${formatDegreeMinute2(ac3)}<br><br>Az = ${Az.toFixed(1)}°<br><br>①Δa = ${da1.toFixed(4)}<br>②Δa = ${da2.toFixed(4)}<br><br>①I = ${i_1.toFixed(1)}'<br>②I = ${i_2.toFixed(1)}'<br>③I = ${i_3.toFixed(1)}'<br>平均I = ${av.toFixed(1)}'<br><br><b>計算過程</b><br><br><b>①Acの計算</b><br>Sin(Ac) = Sin(l) × Sin(d) ＋ Cos(l) × Cos(d) × Cos(h)<br>= Sin(${l.toFixed(4)}°) × Sin(${dc.toFixed(4)}°) ＋ Cos(${l.toFixed(4)}°) × Cos(${dc.toFixed(4)}°) × Cos(${h.toFixed(4)}°)<br>= ${s.toFixed(8)}<br>Ac = Sin⁻¹(${s.toFixed(8)}) = ${formatDegreeMinute2(Ac)}<br><br><b>②Ac'の計算</b><br>Ac' = Ac − Corr. ÷ 60<br>= ${Ac.toFixed(6)}° − ${c.toFixed(4)}′ ÷ 60<br>= ${formatDegreeMinute2(AcP)}<br><br><b>③Azの計算</b><br>Cos(Az) = {Sin(d) − Sin(l) × Sin(Ac')} ÷ {Cos(l) × Cos(Ac')}<br>= ${ca.toFixed(8)}<br>Az = Cos⁻¹(${ca.toFixed(8)}) = ${Az.toFixed(1)}°<br><br><b>④Δaの計算</b><br>①Δa = Sin(Az) ＋ Cos(l) × Δh ÷ 4 = ${da1.toFixed(8)}<br>②Δa = Sin(Az) ＋ Cos(l) × Δh ÷ 4 = ${da2.toFixed(8)}<br><br><b>⑤Iの計算</b><br>①I = (①Ao − ①Ac') × 60 = ${i_1.toFixed(2)}'<br>②I = (②Ao − ②Ac') × 60 = ${i_2.toFixed(2)}'<br>③I = (③Ao − ③Ac') × 60 = ${i_3.toFixed(2)}'<br><br><b>⑥平均I</b><br>= (${i_1.toFixed(2)} ＋ ${i_2.toFixed(2)} ＋ ${i_3.toFixed(2)}) ÷ 3 = ${av.toFixed(2)}'`}
-document.addEventListener('input',function(e){if(e.target.closest('#trainingMode')){calcH()}});
+document.addEventListener('input',function(e){if(e.target.closest('#trainingMode')){calcUT();calcH()}});
 </script>
 <script>
 function resetPanel(panelId){
@@ -211,19 +230,4 @@ document.querySelectorAll('input:not([readonly])').forEach(el=>{
   });
 });
 </script>
-
-<script>
-window.addEventListener('error',function(e){console.log('JS error',e.message);});
-document.addEventListener('DOMContentLoaded',function(){
- try{
-  if(typeof showMenu==='function'){showMenu();}
- }catch(e){}
-});
-</script>
-
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/astro-nav-app/sw.js");
-}</script>
-
 </body></html>
