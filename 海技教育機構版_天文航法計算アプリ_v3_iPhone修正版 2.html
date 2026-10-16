@@ -219,4 +219,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/astro-nav-app/sw.js')
+      .catch(error => console.error(error));
+  });
+}
+</script>
+
 </body></html>
